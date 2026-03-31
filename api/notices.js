@@ -31,8 +31,15 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       const result = await pool.query('SELECT * FROM notices ORDER BY created_at DESC LIMIT 10');
       return res.status(200).json({ success: true, data: result.rows });
+    } else if (req.method === 'POST') {
+      const { title, content } = req.body;
+      if (!title || !content) return res.status(400).json({ success: false, message: 'Title and content required.' });
+      
+      const insertQuery = 'INSERT INTO notices (title, content) VALUES ($1, $2) RETURNING *';
+      const result = await pool.query(insertQuery, [title, content]);
+      return res.status(201).json({ success: true, data: result.rows[0] });
     } else {
-      res.setHeader('Allow', ['GET', 'OPTIONS']);
+      res.setHeader('Allow', ['GET', 'POST', 'OPTIONS']);
       return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
   } catch (error) {
