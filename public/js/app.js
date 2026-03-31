@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const pendingComplaintsValue = document.getElementById('pending-complaints-value');
   const laundryStatValue = document.getElementById('laundry-stat-value');
   const pageTitle = document.getElementById('page-title');
+  const roleSelector = document.getElementById('role-selector');
+  const userNameEl = document.getElementById('user-name');
+  const userRoomEl = document.getElementById('user-room');
+  const userAvatarEl = document.getElementById('user-avatar');
+  const btnPostNotice = document.getElementById('btn-post-notice');
+  const noticeModal = document.getElementById('notice-modal');
+  const closeNoticeModal = document.getElementById('close-notice-modal');
+  const noticeForm = document.getElementById('notice-form');
+
+  let currentRole = 'student';
 
   // Navigation logic
   const navLinks = document.querySelectorAll('#sidebar-nav a');
@@ -20,15 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
   navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      
-      // Update active nav class
       navLinks.forEach(nav => nav.classList.remove('active'));
       link.classList.add('active');
-      
-      // Update topbar title
       pageTitle.innerText = link.innerText;
 
-      // Hide all views, show target view
       const targetView = link.getAttribute('data-view');
       viewSections.forEach(section => {
         section.style.display = 'none';
@@ -36,6 +41,29 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById(`view-${targetView}`).style.display = 'block';
     });
   });
+
+  // Role Selection Logic
+  roleSelector.addEventListener('change', (e) => {
+    currentRole = e.target.value;
+    updateUIForRole();
+  });
+
+  const updateUIForRole = () => {
+    if (currentRole === 'warden') {
+      userNameEl.innerText = 'Hostel Warden';
+      userRoomEl.innerText = 'Admin Block';
+      userAvatarEl.innerText = 'W';
+      btnRaiseComplaint.style.display = 'none';
+      btnPostNotice.style.display = 'block';
+    } else {
+      userNameEl.innerText = 'Student User';
+      userRoomEl.innerText = 'Room 101';
+      userAvatarEl.innerText = 'S';
+      btnRaiseComplaint.style.display = 'block';
+      btnPostNotice.style.display = 'none';
+    }
+    fetchComplaints(); // Re-render with new controls
+  };
 
   // API Base URL
   const API_URL = '/api';
@@ -116,14 +144,38 @@ document.addEventListener('DOMContentLoaded', () => {
     complaintsList.innerHTML = complaints.map(c => `
       <div class="complaint-item">
         <div class="details">
-          <h4>${c.category} Issue</h4>
+          <h4>${c.category} Issue <span style="font-weight: normal; font-size: 0.8rem; color: #666;">(Room: ${c.room_number || 'N/A'})</span></h4>
           <p>${c.description}</p>
         </div>
-        <div class="status-badge status-${c.status}">
-          ${c.status.replace('-', ' ')}
+        <div class="actions-group">
+          <div class="status-badge status-${c.status}">
+            ${c.status.replace('-', ' ')}
+          </div>
+          ${currentRole === 'warden' && c.status === 'pending' ? `
+            <button class="btn-sm btn-resolve" onclick="updateComplaintStatus('${c.id}', 'resolved')">Resolve</button>
+            <button class="btn-sm btn-progress" onclick="updateComplaintStatus('${c.id}', 'in-progress')">Work On</button>
+          ` : ''}
         </div>
       </div>
     `).join('');
+  };
+
+  // Global scope for status update
+  window.updateComplaintStatus = async (id, status) => {
+    try {
+      const response = await fetch(`${API_URL}/complaints`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      });
+      if (response.ok) {
+        fetchComplaints();
+      } else {
+        alert('Failed to update status');
+      }
+    } catch (err) {
+      alert('Error updating status');
+    }
   };
 
   const renderNotices = (notices) => {
@@ -192,6 +244,38 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       alert('Error submitting complaint');
+    }
+  });
+
+  // Toggle Notice Modal
+  btnPostNotice.addEventListener('click', () => {
+    noticeModal.classList.add('active');
+  });
+
+  closeNoticeModal.addEventListener('click', () => {
+    noticeModal.classList.remove('active');
+  });
+
+  // Submit new notice
+  noticeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('notice-title').value;
+    const content = document.getElementById('notice-content').value;
+    
+    try {
+      const response = await fetch(`${API_URL}/notices`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+      });
+      if (response.ok) {
+        alert('Notice posted successfully!');
+        noticeModal.classList.remove('active');
+        noticeForm.reset();
+        fetchNotices();
+      }
+    } catch (err) {
+      alert('Error posting notice');
     }
   });
 
