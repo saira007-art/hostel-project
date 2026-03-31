@@ -22,10 +22,14 @@
         <a href="#" data-view="marketplace">Marketplace</a>
       </nav>
       <div class="user-profile">
-        <div class="avatar">S</div>
+        <div class="avatar" id="user-avatar">S</div>
         <div class="info">
-          <p class="name">Student User</p>
-          <p class="room">Room 101</p>
+          <select id="role-selector" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.8rem; margin-bottom: 5px;">
+            <option value="student" style="color: black;">Student Role</option>
+            <option value="warden" style="color: black;">Warden Role</option>
+          </select>
+          <p class="name" id="user-name">Student User</p>
+          <p class="room" id="user-room">Room 101</p>
         </div>
       </div>
     </aside>
@@ -34,7 +38,10 @@
     <main class="main-content">
       <header class="topbar">
         <h1 id="page-title">Dashboard</h1>
-        <button class="btn-primary" id="btn-raise-complaint">+ New Complaint</button>
+        <div class="header-actions">
+          <button class="btn-primary" id="btn-raise-complaint">+ New Complaint</button>
+          <button class="btn-primary" id="btn-post-notice" style="display: none; background: #6366f1;">+ Post Notice</button>
+        </div>
       </header>
 
       <div id="view-dashboard" class="view-section active">
@@ -132,6 +139,27 @@
           <input type="text" id="complaint-room" value="101" required>
         </div>
         <button type="submit" class="btn-primary full-width">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notice Modal (Warden only) -->
+  <div class="modal-overlay" id="notice-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Post New Notice</h3>
+        <button class="close-btn" id="close-notice-modal">&times;</button>
+      </div>
+      <form id="notice-form">
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="notice-title" required placeholder="e.g. Water Maintenance">
+        </div>
+        <div class="form-group">
+          <label>Content</label>
+          <textarea id="notice-content" rows="4" required placeholder="Describe the notice details..."></textarea>
+        </div>
+        <button type="submit" class="btn-primary full-width">Post to Dashboard</button>
       </form>
     </div>
   </div>
