@@ -63,8 +63,18 @@ module.exports = async (req, res) => {
       const result = await pool.query(insertQuery, values);
       return res.status(201).json({ success: true, data: result.rows[0] });
       
+    } else if (req.method === 'PATCH') {
+      const { id, status } = req.body;
+      if (!id || !status) return res.status(400).json({ success: false, message: 'ID and status required' });
+      
+      const updateQuery = 'UPDATE complaints SET status = $1 WHERE id = $2 RETURNING *';
+      const result = await pool.query(updateQuery, [status, id]);
+      
+      if (result.rowCount === 0) return res.status(404).json({ success: false, message: 'Complaint not found' });
+      return res.status(200).json({ success: true, data: result.rows[0] });
+      
     } else {
-      res.setHeader('Allow', ['GET', 'POST', 'OPTIONS']);
+      res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'OPTIONS']);
       return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
   } catch (error) {
